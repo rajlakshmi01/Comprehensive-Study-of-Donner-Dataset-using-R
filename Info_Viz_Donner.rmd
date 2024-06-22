@@ -1,0 +1,437 @@
+---
+title: "Information-VIsualization-on-Donner-Dataset"
+author: "Rajlakshmi Maurya"
+date: "May 8, 2024"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+#PROBLEM 1 ***********************************************************************************************************************************
+```{r}
+#load all the libraries. these libraies will be used in successive programs.
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(knitr)
+library(ggplot2)
+library(ggpubr)
+library(ggsci)
+library(vcd)
+library(vcdExtra)
+
+
+#a)
+# Frequency of Family Names
+family_name_freq <- as.data.frame(table(Donner$family))
+colnames(family_name_freq) <- c("Family", "Frequency")
+print(family_name_freq)
+# Plot the graph using ggplot2 with color
+ggplot(family_name_freq, aes(x = Family, y = Frequency, fill = Family)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Frequency of Family Names", x = "Family Name", y = "Frequency") +
+  scale_fill_discrete(name = "Family") +  # Set legend title
+  theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1))
+
+#b)
+# Distribution of Genders within Families
+gender_in_families <- as.data.frame(table(Donner$family, Donner$sex))
+colnames(gender_in_families) <- c("Family", "Gender", "Frequency")
+print(gender_in_families)
+ggplot(gender_in_families, aes(x = Family, y = Frequency, fill = Gender)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Distribution of Genders within Families", x = "Family", y = "Frequency", fill = "Gender")+
+  theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1))
+
+#c)
+# Define age groups and count the number of people survive
+donner_dataset<-Donner
+donner_dataset$age_group <- cut(donner_dataset$age, breaks = c(0, 18, 50, max(Donner$age)), labels = c("0-18", "19-50", "51+"))
+# Count the number of survived people in each age group
+survived_counts <- aggregate(survived ~ age_group, data = donner_dataset, FUN = function(x) sum(x == 1))
+print(survived_counts)
+# Plot the graph using ggplot2
+ggplot(survived_counts, aes(x = age_group, y = survived, fill = age_group,palette="jco")) +
+  geom_bar(stat = "identity") +
+  labs(title = "Survival Counts by Age Group", x = "Age Group", y = "Number of Survived People",title.align = "center") +
+  theme_minimal()
+  
+
+
+```
+
+The 3 Exploratory data analysis Questions I chose to address are:
+
+A. Do certain family names appear more frequently than others?
+   I Visualized the data using bar chart to figure out if certain family names appear more frequently than others. The analysis resulted in giving the   outcome that there are more people with unknown family name (other column). Among all families, Donner has most frequency and McCutchen has least frequency.
+   
+   
+B. What is the distribution of genders within families?
+   By examining the gender composition within families, we can understand the dynamics of family units within the Donner dataset. This analysis involved    counting the number of males and females within each family. As observed, there is more number of males vs females in families with no name (other). Coming to families with names, Donner family has highest count of Females whereas Family with no name (other) has lowest. Coming to male count, McCutchen family has least male count. 
+   
+C. Is there any correlation between age and survival rate?
+     Investigating whether age played a role in the survival of the Donner party members could be insightful. This analysis could involve comparing the ages       of survivors and non-survivors.Sectioning the data in 3 age groups that is 0-18, 19-50 and 51+, to calculate the survival frequency of each age group resulted in observing that as age increases, the number of who people survive, decreases.
+   
+
+
+
+#PROBLEM2******************************************************************************************************************************************
+
+
+```{r}
+data("Donner", package = "vcdExtra")
+
+# Calculate the total number of survivors in each family and the percentage of survivors
+family_survival_summary <- Donner %>% #loading the data to dataframe.
+  group_by(family) %>%  #grouping the data by family name
+  summarize(total_members = n(),     #total members in each family
+            total_survivors = sum(survived),  #counting members who survived
+            percentage_survived = (total_survivors / total_members) * 100) %>%
+  arrange(desc(percentage_survived)) # arrange data in descending order of percentage
+
+# Print the data frame
+print(family_survival_summary)
+
+```
+    Explaination 2: As we can see, Among all families Breen had 100% survival rate with all its family members surviving the calamity successfully. The Eddy      family had lowest survival rate which is 25%, that means only one-fourth of the family members survived.
+#PROBLEM3*************************************************************************************************************************************
+
+```{r}
+library(ggpubr)
+# Group the data by family and calculate total survivors
+survivors_summary <- Donner%>%
+  group_by(family) %>%
+  summarize(
+            total_survivors = sum(survived))
+survivors_summary
+
+# Create the pie chart
+ggpie(survivors_summary, "total_survivors", label = "total_survivors",fill="family",lab.pos="in",lab.font = list(color = "white"),palette="jco",legend="right", title="Count of total survivors in each family")
+
+  
+```
+      
+     Explanation3: As we can see group_by(family) groups the data by the 'family' column.
+     summarize() calculates summary statistics for each group, in this case, it calculates the total number of survivors (total_survivors) within each   family.
+    Coming to plotting the graph, ggpie() is a function to create a pie chart using ggplot2. 
+    survivors_summary is the data frame with summarized information."
+    total_survivors" specifies the variable to be represented by the size of the pie slices.
+    fill = "family" specifies the variable to determine the colors of the pie slices.
+    label = "total_survivors" sets the label for each slice to be the total number of survivors.
+    lab.pos = "in" positions the labels inside the pie chart.
+    lab.font = list(color = "white") sets the label color to white.
+     palette = "jco" specifies the color palette to use.
+    legend = "right" positions the legend to the right of the pie chart.
+    As we can see, the family with highest count occupies biggest slice in pie chart, whereas lowest count family occupies lowest slice.
+
+#PROBLEM4********************************************************************************************************************************************
+
+```{r}
+# Calculate the count of died and survived
+died_count <- sum(Donner$survived == 0)
+survived_count <- sum(Donner$survived == 1)
+
+# Create a dataframe
+survival_summary <- data.frame(
+  Status = factor(c("Died", "Survived"), levels = c("Died", "Survived")),
+  Count = c(died_count, survived_count)
+)
+
+# Print the summary dataframe
+print(survival_summary)
+
+```
+
+    line 142 calculates the number of instances where the 'survived' column in the Donner dataset equals 0, indicating those who died.
+    line 143calculates the number of instances where the 'survived' column equals 1, indicating those who survived.
+    data.frame() creates a new data frame named survival_summary.
+    Status is a factor variable with two levels, "Died" and "Survived".
+    Count contains the counts of individuals who died and survived, respectively.
+    factor(c("Died", "Survived"), levels = c("Died", "Survived")) ensures that the levels are ordered as "Died" first and then "Survived".
+
+    As we can see, the above Dataframe has attributes Status with Died and survived values and their corresponding count in Count column.
+    
+#PROBLEM5*******************************************************************************************************************************
+```{r}
+# Load the required library
+library(ggpubr)
+
+ggbarplot(survival_summary, x = "Status", y = "Count",
+          fill = "Status", 
+          palette = "jco",
+          title = "Survivors in the Donner Party",
+          title.pos = "center",
+          xlab = "Survival Status",
+          ylab = "Count of People survived",
+          width = 0.5)+
+  theme_gray()
+```
+
+    ggbarplot() creates a bar plot using the ggplot2 package.
+    survival_summary is the data frame containing the summary information.
+    x = "Status" specifies the variable for the x-axis, which is the survival status.
+    y = "Count" specifies the variable for the y-axis, which is the count of people.
+    fill = "Status" assigns colors based on the different categories of the "Status" variable.
+    palette = "jco" specifies the color palette to be used, in this case, the jco palette.
+    title, title.pos, xlab, ylab, and width are various parameters to customize the appearance and layout of the plot.
+    Here, theme_gray() sets the theme of the plot to use a gray background with white grid lines. It modifies the appearance of the plot to follow the gray  theme and observe the visible difference between bars length.
+
+
+##PROBLEM6***************************************************************************************************************************************************
+
+```{r}
+
+# Take a random sample of 20 records from the Donner dataset
+sample_data <- Donner[sample(nrow(Donner), 20), ]
+#order sample data by age
+sample_data <- sample_data[order(sample_data$age, decreasing = TRUE), ]
+
+# Add row numbers as IDs
+sample_data$ID <- seq_len(nrow(sample_data))
+sample_data <- cbind(rownames(sample_data), sample_data)
+rownames(sample_data) <- NULL
+colnames(sample_data) <- c("name","family","age","sex","survived_status","death","rowid")
+# Convert "survived" to a factor with labels "Survived" and "Died"
+sample_data$survived_status <- factor(sample_data$survived_status, levels = c(0, 1), labels = c("Died", "Survived"))
+
+# Create the bar plot with labels, aligned names, and bars arranged by age
+ggbarplot(sample_data, x = "name", y = "age",
+          fill = "survived_status",
+          ylab = "Age", xlab = "Name (Last, First)",
+          main = "Age of Donner Party Members who survived or died ",
+          position = position_dodge(),
+          legend = "right",
+          palette = c("red", "green")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+    For the above visulaization, we start by taking sample of data with 20 record and order it based on age attribute in decreasing order. The Donner data set has unique row names to identify data, in order to get rquired observation, copying the Donner data to dataframe, and assigning the corresponding new column names for row values for easy manipulation. Apart from that we assign rowid to each row as identifier.Then the the "survived_status" column is converted to a factor with labels "Died" and "Survived" in line 201. plotting  the graph using ggbarplot function, where x = "name" specifies the variable for the x-axis as the name of the individuals.
+    y = "age" specifies the variable for the y-axis as the age of the individuals.
+    fill = "survived_status" fills the bars based on whether the individual survived or died.
+    ylab and xlab specify the labels for the y-axis and x-axis, respectively.
+    main sets the main title of the plot.
+    position = position_dodge() ensures that bars are placed adjacent to each other for better visualization.
+    legend = "right" positions the legend on the right side of the plot.
+    palette = c("red", "green") defines the color palette for the plot.
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) adjusts the angle, vertical and horizontal justification of x-axis text for better readability.
+
+    As we can observe,The bars are organised in decreasing order of the age, with each bar associated with members/Name uniquely identifying itself as died or survived category. 
+
+# PROBLEM 7******************************************************************************************************************
+
+
+```{r }
+#Reorder the levels of "name" based on survival status
+sample_data <- sample_data[order(sample_data$survived_status, sample_data$age), ]
+
+sample_data
+
+# Create the bar plot with labels, aligned names, and bars arranged by survival status and then age
+ggbarplot(sample_data, x = "name", y = "age",
+          fill = "survived_status",
+          ylab = "Age", xlab = "Name",
+          title  = "Age of Donner Party Members who Survived or Died",
+          position = position_dodge(),
+          legend = "right",
+          palette = c( "red","green")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+     
+
+    Explanation 7: The sample_data dataframe is reordered based on the survival status and then the age of the individuals. Then, a bar plot is created using ggplot2 to visualize the ages of the Donner Party members, with bars arranged by survival status and then by age.
+
+    The ggbarplot has the following attributes
+    x = "name" specifies the variable for the x-axis as the names of the individuals.
+    y = "age" specifies the variable for the y-axis as the age of the individuals.
+    fill = "survived_status" fills the bars based on whether the individual survived or died.
+    ylab and xlab specify the labels for the y-axis and x-axis, respectively.
+    title sets the main title of the plot.
+    position = position_dodge() ensures that bars are placed adjacent to each other for better visualization.
+    legend = "right" positions the legend on the right side of the plot.
+    palette = c("red", "green") defines the color palette for the plot.
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) adjusts the angle, vertical, and horizontal justification of x-axis text for better readability
+
+    As we can observe, In Died Category, Catherine Pike is Youngest and Augustus Spitzer is eldest. In survived category Peter Breen is youngest and Mary Breen is oldest.
+
+#PROBLEM8*****************************************************************************************************************************
+
+```{r}
+# Calculate the total number of survivors
+total_survivors <- sum(Donner$survived)
+
+# Calculate the percentage of survivors by family based on total survivors
+survival_percentage_by_family <- Donner %>%
+  group_by(family) %>%
+  summarize(total_members = n(),
+            total_survivors_in_family = sum(survived),
+            percentage_survived = (total_survivors_in_family / total_survivors) * 100) %>%
+  arrange(desc(percentage_survived))
+
+# Create the dot chart for survivor percent of each family
+ggplot(family_survival_summary, aes(x = reorder(family, -percentage_survived), y = percentage_survived, label = sprintf("%.2f%%", percentage_survived))) +
+  geom_segment(aes(x = reorder(family, -percentage_survived), xend = family, y = 0, yend = percentage_survived), color = "grey",linewidth=2) +
+  geom_point(aes(color = percentage_survived), size = 3) +
+  geom_text(size = 3, hjust = -0.2) +
+  labs(title = "Percentage of Survivors by Family",
+       x = "Family",
+       y = "Percentage of Survivors",
+       caption = "Percentage calculated based on total members in each family") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+# Create the dot chart
+ggplot(survival_percentage_by_family, aes(x = reorder(family, -percentage_survived), y = percentage_survived, label = sprintf("%.2f%%", percentage_survived))) +
+  geom_segment(aes(x = reorder(family, -percentage_survived), xend = family, y = 0, yend = percentage_survived), color = "grey",linewidth=2) +
+  geom_point(size = 3,aes(color = percentage_survived)) +
+  geom_text(size = 3, hjust = -0.2) +
+  labs(title = "Percentage of Survivors by Family in Total survivors", title.align="center",
+       x = "Family",
+       y = "Percentage of Survivors",
+       caption = "Percentage calculated based on total number of survivors") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+
+     The survival_percentage_by_family block code calculates the percentage of survivors in each family based on the total number of survivors.
+     It groups the data by family, calculates the total members in each family, the total survivors in each family, and then computes the percentage of   survivors within each family.The results are arranged in descending order of the percentage of survivors.
+
+     The ggplot code creates a dot chart to visualize the percentage of survivors by family.
+     geom_segment, geom_point, and geom_text are used to represent the data points and corresponding colors.
+     The x-axis represents each family, reordered by the percentage of survivors.
+     The y-axis represents the percentage of survivors in each family.
+     The chart is labeled with appropriate titles, axis labels, and captions.
+
+     The above solution has 2 dot chart
+     1. first dot chart depicting the percent of survivors based on total members in each family
+     2. second dot chart depicting the percent of survivors when considering total survivors of all families.
+     As we can observe, Breen family has the highest survival percentage, followed by Reed family. Eddy Family had least survival percentage.
+
+#PROBLEM9*************************************************************************************************************************************************
+
+```{r}
+# Filter the data for survivors and calculate the count of survivors per family
+survivors_data <- Donner %>% filter(survived == 1) %>% count(family)
+# Calculate the total count of individuals per family
+total_data <- Donner %>% count(family)
+# Calculate the number of survivors
+num_survivors <- survivors_data$n
+# Calculate the mean and standard deviation of the number of survivors
+mean_survivors <- mean(num_survivors)
+sd_survivors <- sd(num_survivors)
+# Calculate the z-score for each family based on the number of survivors and round off to 3 digit decimal place
+z_scores <- signif((num_survivors - mean_survivors) / sd_survivors, digits = 3) 
+
+# Combine the data into a single dataframe
+family_data <- data.frame(
+  Family = survivors_data$family,
+  NumberSurvived = survivors_data$n,
+  ZScore = z_scores
+)
+
+# Order the dataframe by z-score
+family_data <- family_data[order(family_data$ZScore), ]
+
+# Print the formatted dataframe
+print(family_data)
+
+# Create the plot
+ggplot(family_data, aes(reorder(Family, ZScore), ZScore, color = ZScore > 0)) + 
+  # Add columns representing z-scores
+  geom_col(width = 0.1, color = "grey", fill = "grey") + 
+  # Add points for z-scores
+  geom_point(size = 8, show.legend = FALSE) + 
+  # Set x-axis label
+  xlab("Family") + 
+  # Set y-axis label
+  ylab("Z-Score") + 
+  # Add horizontal line at y = 0
+  geom_hline(yintercept = 0) + 
+  # Add text labels for z-scores
+  geom_text(aes(label = ZScore), color = "black", size = 3)+
+  theme_minimal()+ #remove any background color
+  # Rotate x-axis labels vertically
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) 
+
+```
+
+    This above code filters the data to include only survivors, calculates the count of survivors per family, then computes the Z-score for each family based on the number of survivors. Finally, it visualizes the Z-scores for each family using a plot. The lines 318-323 calculate the Z-score for each family based on the number of survivors, where the Z-score measures how many standard deviations an observation is from the mean. The ggplot uses following attributes to plot the graph: 
+    geom_col adds columns representing the Z-scores.
+    geom_point adds points for the Z-scores.
+    xlab and ylab set the labels for the x-axis and y-axis, respectively.
+    geom_hline adds a horizontal line at y = 0 to represent the mean.
+    geom_text adds text labels for the Z-scores.
+    theme_minimal() removes any background color, providing a clean appearance.
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) rotates the x-axis labels vertically for better readability.
+
+    As we can see, the dots are arranged in ascending order of their Z-score values (increasing from left to right).The Z-score of -ve value indicates that the observation for Eddy,FosdWolf,Keseberg, McCutchen are standard deviations below the mean of the dataset. The positive Z-Score indicates that the observation for MurFosPik, Reed, Donner, Graves, Breen, Other are standard deviations  above the mean of dataset.
+    
+    
+#PROBLEM10***************************************************************************************************************************
+
+```{r}
+# reusing the family data from Problem 9 with attributes Family, ZScore, NumberSurvived to plot the Cleveland Plot
+#a<- ifelse(family_data$ZScore < 0, "red", "lightblue")
+# Create the Cleveland plot
+ggplot(family_data, aes(x = reorder(Family, ZScore), y = ZScore, color = factor(sign(ZScore)))) +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0) +
+  scale_y_continuous(labels = scales::percent_format()) +  # Format y-axis as percentage
+  scale_color_manual(values = c("red", "blue"), labels = c("Low", "High")) +
+  labs(title = "Survivors by Families (Cleveland Plot)",
+       x = "Family",
+       y = "Total Survivors",
+       color = "Z-Score Sign") +
+  theme(plot.title = element_text(hjust = 1))+
+  theme_minimal()+
+  coord_flip()  # Rotate the plot by 90 degrees
+
+
+```
+
+```{r}
+# Create a vector of colors for x-axis labels based on Z-score
+family_label_colors <- ifelse(family_data$ZScore < 0, "red", "blue")
+# reusing the family data from Problem 9 with attributes Family, ZScore, NumberSurvived to plot the Cleveland Plot
+
+# Create the Cleveland plot
+ggplot(family_data, aes(x = reorder(Family, ZScore), y = ZScore, color = factor(sign(ZScore)))) +
+  geom_point(size = 3) +
+  geom_hline(yintercept = 0) +
+  scale_y_continuous(labels = scales::percent_format()) +  # Format y-axis as percentage
+  scale_color_manual(values = c("red", "blue"), labels = c("Low", "High")) +
+  labs(title = "Survivors by Families (Cleveland Plot)",
+       x = "Family",
+       y = "Total Survivors",
+       color = "Z-Score Sign") +
+  theme(plot.title = element_text(hjust = 1),
+        axis.text.x = element_text(colour = family_label_colors, angle = 90, vjust = 0.5, hjust = 1))+
+  theme_minimal()+
+  coord_flip()
+
+```
+
+
+
+      The code creates a Cleveland plot using ggplot2 to visualize the Z-scores and the number of survivors by family. The ggplot function plots cleveland plot using attributes
+     aes  which specifies the aesthetic mappings.
+     geom_point adds points to the plot representing the Z-scores.
+     geom_hline adds a horizontal line at y = 0 to indicate the reference line.
+     scale_y_continuous formats the y-axis labels as percentages.
+     scale_color_manual manually sets the colors for positive and negative Z-scores, with labels "Low" and "High" respectively.
+     labs sets the titles and labels for the plot and legend.
+     theme(plot.title = element_text(hjust = 1)) adjusts the horizontal alignment of the plot title.
+     theme_minimal() removes any background color, providing a clean appearance.
+     coord_flip() rotates the plot by 90 degrees, making the x-axis horizontal for better readability.
+
+    The resulting plot visualizes the Z-scores and the number of survivors by family, with different colors indicating positive and negative Z-scores.
+
