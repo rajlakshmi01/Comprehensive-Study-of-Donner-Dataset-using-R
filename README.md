@@ -66,4 +66,4 @@ Plot the total number of survivor z-scores against the family name in a Clevelan
 - [Function reference • ggplot2 (tidyverse.org)](https://ggplot2.tidyverse.org)
 
 
-This `README.md` file provides a comprehensive overview of the assignment, instructions, required packages, tasks, and important references. You can upload this file to your GitHub repository along with your completed assignment.
+This `README.md` file provides a comprehensive overview of the assignment, instructions, required packages, tasks, and important references.
