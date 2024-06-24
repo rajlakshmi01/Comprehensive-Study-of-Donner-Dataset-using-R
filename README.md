@@ -22,7 +22,7 @@ Ensure you have the following R packages installed:
 - `vcd`
 - `vcdExtra`
 
-## Assignment Tasks
+## Tasks Performed
 
 ### P1: Donner Data Exploratory Analysis
 Perform a basic analysis of the Donner data frame (`vcdExtra::Donner`). Answer the following questions and justify your answers:
